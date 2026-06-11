@@ -5,7 +5,7 @@ pipeline {
         DOCKER_REGISTRY = 'docker.io'
         DOCKER_REPO = 'warren042/node-api'
         DOCKER_CREDENTIALS = 'docker-hub-creds'
-        IMAGE_TAG = "${env.BUILD_NUMBER}-${env.GIT_COMMIT[0..7]}"
+        IMAGE_TAG = "${env.BUILD_NUMBER}"
     }
 
     stages {
