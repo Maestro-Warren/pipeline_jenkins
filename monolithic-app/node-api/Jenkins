@@ -1,53 +1,61 @@
- pipeline {
+  pipeline {
       agent any
 
       environment {
-          DOCKER_REPO = 'warren042/node-api'
-          IMAGE_TAG = "${env.BUILD_NUMBER}"
-      }
+        DOCKER_REPO = 'warren042/node-api'
+        IMAGE_TAG = "${env.BUILD_NUMBER}"
+    }
 
       stages {
-          stage('Checkout') {
+        stage('Checkout') {
               steps {
                   checkout scm
-              }
-          }
+            }
+        }
 
-          stage('Install & Lint') {
+        stage('Install & Lint') {
               steps {
-                  dir('monolithic-app/node-api') {
+                dir('monolithic-app/node-api') {
                       sh "docker build --target builder -t ${DOCKER_REPO}:builder ."
-                  }
-              }
-          }
-  
-          stage('Test') {
-              steps {
-                  dir('monolithic-app/node-api') {
-                      sh "docker build --target test -t ${DOCKER_REPO}:test ."
-                  }
-              }
-          }
-  
-          stage('Build Production Image') {
-              steps {
-                  dir('monolithic-app/node-api') {
-                      sh "docker build --target production -t ${DOCKER_REPO}:${IMAGE_TAG} ."
-                  }
-              }
-          }
+                }
+            }
+        }
 
-          stage('Push') {
+        stage('Test') {
+              steps {
+                dir('monolithic-app/node-api') {
+                      sh "docker build --target test -t ${DOCKER_REPO}:test ."
+                }
+            }
+        }
+
+        stage('Build Production Image') {
+              steps {
+                dir('monolithic-app/node-api') {
+                      sh "docker build --target production -t ${DOCKER_REPO}:${IMAGE_TAG} ."
+                }
+            }
+        }
+
+        stage('Push') {
               when { branch 'main' }
               steps {
-                  sh "echo 'Push skipped - configure Docker Hub credentials first'"
-              }
-          }
-      }
-  
+                dir('monolithic-app/node-api') {
+                      script {
+                        docker.withRegistry('https://index.docker.io/v1/', '084d1a9f-d13f-4311-be4b-f5ecd995c3b3') {
+                              def img = docker.image("warren042/node-api:${IMAGE_TAG}")
+                            img.push()
+                            img.push('latest')
+                        }
+                    }
+                }
+            }
+        }
+    }
+
       post {
           always { cleanWs() }
           failure { echo 'Pipeline FAILED' }
           success { echo 'Pipeline SUCCESS' }
-      }
-  }
+    }
+}
