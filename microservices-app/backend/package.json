@@ -1,0 +1,24 @@
+{
+  "name": "fullstack-backend",
+  "version": "1.0.0",
+  "description": "Fullstack backend API with Postgres and Redis",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js",
+    "test": "jest --coverage --forceExit --reporters=default --reporters=jest-junit"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "pg": "^8.11.3",
+    "redis": "^4.6.12"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "jest-junit": "^16.0.0",
+    "supertest": "^6.3.3",
+    "nodemon": "^3.0.2"
+  }
+}

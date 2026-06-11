@@ -1,0 +1,9 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v"
+
+[tool.bandit]
+targets = ["src"]
+
+[tool.pylint.messages_control]
+disable = ["C0114", "C0115", "C0116"]
