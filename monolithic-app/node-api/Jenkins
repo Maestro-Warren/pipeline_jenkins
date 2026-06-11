@@ -38,7 +38,6 @@
         }
 
         stage('Push') {
-              when { branch 'main' }
               steps {
                 dir('monolithic-app/node-api') {
                       script {
