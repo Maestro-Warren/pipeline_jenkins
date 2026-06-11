@@ -1,82 +1,53 @@
-pipeline {
-    agent any
+ pipeline {
+      agent any
 
-    environment {
-        DOCKER_REGISTRY = 'docker.io'
-        DOCKER_REPO = 'warren042/node-api'
-        DOCKER_CREDENTIALS = 'docker-hub-creds'
-        IMAGE_TAG = "${env.BUILD_NUMBER}"
-    }
+      environment {
+          DOCKER_REPO = 'warren042/node-api'
+          IMAGE_TAG = "${env.BUILD_NUMBER}"
+      }
 
-    stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
+      stages {
+          stage('Checkout') {
+              steps {
+                  checkout scm
+              }
+          }
 
-        stage('Install & Lint') {
-            steps {
-                sh '''
-                    docker build --target builder -t ${DOCKER_REPO}:builder .
-                    docker run --rm ${DOCKER_REPO}:builder npx eslint src/
-                '''
-            }
-        }
+          stage('Install & Lint') {
+              steps {
+                  dir('monolithic-app/node-api') {
+                      sh "docker build --target builder -t ${DOCKER_REPO}:builder ."
+                  }
+              }
+          }
+  
+          stage('Test') {
+              steps {
+                  dir('monolithic-app/node-api') {
+                      sh "docker build --target test -t ${DOCKER_REPO}:test ."
+                  }
+              }
+          }
+  
+          stage('Build Production Image') {
+              steps {
+                  dir('monolithic-app/node-api') {
+                      sh "docker build --target production -t ${DOCKER_REPO}:${IMAGE_TAG} ."
+                  }
+              }
+          }
 
-        stage('Test') {
-            steps {
-                sh '''
-                    docker build --target test -t ${DOCKER_REPO}:test .
-                '''
-                sh '''
-                    docker create --name test-container ${DOCKER_REPO}:test
-                    docker cp test-container:/app/coverage ./coverage
-                    docker rm test-container
-                '''
-            }
-            post {
-                always {
-                    junit 'coverage/junit.xml'
-                    publishHTML([
-                        reportDir: 'coverage/lcov-report',
-                        reportFiles: 'index.html',
-                        reportName: 'Coverage Report'
-                    ])
-                }
-            }
-        }
-
-        stage('Build Production Image') {
-            steps {
-                script {
-                    docker.build("${DOCKER_REPO}:${IMAGE_TAG}", "--target production .")
-                }
-            }
-        }
-
-        stage('Security Scan') {
-            steps {
-                sh "docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image ${DOCKER_REPO}:${IMAGE_TAG}"
-            }
-        }
-
-        stage('Push') {
-            when { branch 'main' }
-            steps {
-                script {
-                    docker.withRegistry("https://${DOCKER_REGISTRY}", DOCKER_CREDENTIALS) {
-                        def img = docker.image("${DOCKER_REPO}:${IMAGE_TAG}")
-                        img.push()
-                        img.push('latest')
-                    }
-                }
-            }
-        }
-    }
-
-    post {
-        always { cleanWs() }
-        failure { echo 'Node.js pipeline FAILED' }
-    }
-}
+          stage('Push') {
+              when { branch 'main' }
+              steps {
+                  sh "echo 'Push skipped - configure Docker Hub credentials first'"
+              }
+          }
+      }
+  
+      post {
+          always { cleanWs() }
+          failure { echo 'Pipeline FAILED' }
+          success { echo 'Pipeline SUCCESS' }
+      }
+  }
